@@ -1,4 +1,5 @@
 import { getGithubPrDiff } from "@/utils/githubPrDiff/githubPrDiff";
+import { getPrInfoFromUrl } from "@/utils/getPrInfoFromUrl/getPrInfoFromUrl";
 
 export default defineContentScript({
   matches: ["https://github.com/*/*/pull/*/files*"],
@@ -7,9 +8,15 @@ export default defineContentScript({
       '[data-details-container-group="file"]'
     );
 
+    const { owner, repo, prNumber } = getPrInfoFromUrl(location.pathname);
+
     const diffs = getGithubPrDiff(fileBlocks);
 
-    console.log("diffs:", diffs);
+    // backgtoundにメッセージを送信
+    browser.runtime.sendMessage({
+      type: "GITHUB_PR_CONTEXT",
+      payload: { owner, repo, prNumber, diffs },
+    });
   },
 });
 
