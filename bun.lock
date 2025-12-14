@@ -1,12 +1,12 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 1,
   "workspaces": {
     "": {
       "name": "wxt-react-starter",
       "dependencies": {
         "react": "^19.1.1",
         "react-dom": "^19.1.1",
+        "zod": "^4.1.13",
       },
       "devDependencies": {
         "@types/react": "^19.1.12",
