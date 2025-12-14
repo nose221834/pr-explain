@@ -4,8 +4,15 @@ export default defineContentScript({
     const html = document.documentElement.outerHTML;
     console.log("HTML length:", html.length);
 
-    const title = document.querySelector("title")?.textContent;
-    console.log("title:", title);
+    const fileNameElements = document.querySelectorAll(
+      ".Link--primary.Truncate-text"
+    );
+
+    const fileNames = Array.from(fileNameElements).map((el) =>
+      el.textContent?.trim()
+    );
+
+    console.log("fileNames:", fileNames);
 
     const oldLineElements = document.querySelectorAll(
       ".blob-num.blob-num-deletion.js-linkable-line-number"
