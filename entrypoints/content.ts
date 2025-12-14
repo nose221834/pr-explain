@@ -12,11 +12,24 @@ export default defineContentScript({
 
     const diffs = getGithubPrDiff(fileBlocks);
 
+    console.log("diffs:", diffs);
+
     // backgtoundにメッセージを送信
-    browser.runtime.sendMessage({
-      type: "GITHUB_PR_CONTEXT",
-      payload: { owner, repo, prNumber, diffs },
-    });
+    browser.runtime.sendMessage(
+      {
+        type: "FETCH_DEEPWIKI",
+        payload: { owner, repo },
+      },
+      (response) => {
+        if (response && response.success) {
+          console.log("DeepWiki data:", response.wikiData);
+        } else if (response && !response.success) {
+          console.error("Error fetching DeepWiki data:", response.error);
+        } else {
+          console.error("No response received from background script");
+        }
+      }
+    );
   },
 });
 
