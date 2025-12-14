@@ -6,6 +6,27 @@ export default defineContentScript({
 
     const title = document.querySelector("title")?.textContent;
     console.log("title:", title);
+
+    const oldLineElements = document.querySelectorAll(
+      ".blob-num.blob-num-deletion.js-linkable-line-number"
+    );
+
+    const oldLines = Array.from(oldLineElements).map((el) => ({
+      line: Number(el.getAttribute("data-line-number")),
+      text: el.closest("tr")?.querySelector(".blob-code")?.textContent ?? "",
+    }));
+
+    console.log("oldLines:", oldLines);
+
+    const newLineElements = document.querySelectorAll(
+      ".blob-num.blob-num-addition.js-linkable-line-number.js-blob-rnum"
+    );
+    const newLines = Array.from(newLineElements).map((el) => ({
+      line: Number(el.getAttribute("data-line-number")),
+      text: el.closest("tr")?.querySelector(".blob-code")?.textContent ?? "",
+    }));
+
+    console.log("newLines:", newLines);
   },
 });
 
