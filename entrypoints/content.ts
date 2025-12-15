@@ -5,13 +5,20 @@ import type { Message } from "./background";
 export default defineContentScript({
   matches: ["https://github.com/*/*/pull/*/files*"],
   async main() {
-    browser.runtime.onMessage.addListener((message) => {
-      if (message?.type === "START_EXPLAIN") {
-        console.log("start explain clicked from UI");
-        // ここで diff 収集や sendMessage(background) を開始
-      }
+    // UIからの起動依頼を受け入れるお試しコード
+    browser.runtime.onMessage.addListener((msg: any, sender, sendResponse) => {
+      if (msg?.type !== "GET_TEXT") return;
+
+      const fileBlocks = document.querySelectorAll(
+        '[data-details-container-group="file"]'
+      );
+      console.log("fileNumber:", fileBlocks.length);
+
+      // 同期的にレスポンスを返す
+      sendResponse(`hello from content. files=${fileBlocks.length}`);
     });
 
+    // 以下、実際の処理
     const fileBlocks = document.querySelectorAll(
       '[data-details-container-group="file"]'
     );
