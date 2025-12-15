@@ -1,5 +1,5 @@
 import { DiffsSchema } from "@/utils/githubPrDiff/githubPrDiff.shema";
-import { z } from "zod";
+import * as z from "zod";
 import { geminiApiCreateReport } from "@/utils/deepwikiMcp/geminiApiCreateReport";
 
 export const MessageSchema = z.object({
@@ -22,12 +22,14 @@ export default defineBackground(() => {
     browser.runtime.onMessage.addListener(async (message: Message, sender) => {
       console.log("message:", message);
 
-      const report = await geminiApiCreateReport(
-        message.owner,
-        message.repo,
-        message.prNumber,
-        message.diffs
-      );
+      // geminiのAPIが勿体無いので一旦テスト用に固定値を返す
+      // const report = await geminiApiCreateReport(
+      //   message.owner,
+      //   message.repo,
+      //   message.prNumber,
+      //   message.diffs
+      // );
+      const report = "test";
 
       console.log("report:", report);
     });

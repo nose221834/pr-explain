@@ -1,5 +1,5 @@
 // src/lib/github-diff.schema.ts
-import { z } from "zod";
+import * as z from "zod";
 
 export const LineTypeSchema = z.enum(["delete", "add"]);
 export type LineType = z.infer<typeof LineTypeSchema>;
