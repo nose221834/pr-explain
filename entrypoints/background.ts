@@ -2,6 +2,7 @@ import { DiffsSchema } from "@/utils/githubPrDiff/githubPrDiff.shema";
 import * as z from "zod";
 import { geminiApiCreateReport } from "@/utils/deepwikiMcp/geminiApiCreateReport";
 
+// Content script からのメッセージ（PR情報）
 export const MessageSchema = z.object({
   owner: z.string(),
   repo: z.string(),
@@ -11,16 +12,36 @@ export const MessageSchema = z.object({
 
 export type Message = z.infer<typeof MessageSchema>;
 
+// UI からのメッセージ（開始指示）
+export const StartMessageSchema = z.object({
+  type: z.literal("START"),
+  tabId: z.number(),
+});
+
+export type StartMessage = z.infer<typeof StartMessageSchema>;
+
+// Background → Content へのメッセージ（テキスト要求）
+export const GetTextMessageSchema = z.object({
+  type: z.literal("GET_TEXT"),
+});
+
+export type GetTextMessage = z.infer<typeof GetTextMessageSchema>;
+
 export default defineBackground(() => {
   //UIからの起動依頼を受け入れるお試しコード
-  browser.runtime.onMessage.addListener((msg: any) => {
-    if (msg?.type !== "START") return;
+  browser.runtime.onMessage.addListener((msg: StartMessage) => {
+    // 型チェック
+    const parseResult = StartMessageSchema.safeParse(msg);
+    if (!parseResult.success) return;
+
+    const startMessage = parseResult.data;
 
     (async () => {
-      const tabId = msg.tabId as number;
+      const tabId = startMessage.tabId;
 
       // background -> content（文字列要求）
-      const res = await browser.tabs.sendMessage(tabId, { type: "GET_TEXT" });
+      const getTextMessage: GetTextMessage = { type: "GET_TEXT" };
+      const res = await browser.tabs.sendMessage(tabId, getTextMessage);
 
       console.log("res:", res);
 

@@ -8,6 +8,7 @@ import {
   CardTitle,
   CardContent,
 } from "@/components/ui/card";
+import type { StartMessage } from "../background";
 
 export function App() {
   const [text, setText] = useState<string>("");
@@ -32,7 +33,8 @@ export function App() {
     if (!tab?.id) return;
 
     // sidepanel -> background（起動依頼）
-    await browser.runtime.sendMessage({ type: "START", tabId: tab.id });
+    const startMessage: StartMessage = { type: "START", tabId: tab.id };
+    await browser.runtime.sendMessage(startMessage);
   };
 
   return (
