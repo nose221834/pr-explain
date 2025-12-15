@@ -1,13 +1,25 @@
-function App() {
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+export function App() {
   return (
-    <div className="w-96 p-6">
-      <h1 className="text-2xl font-bold text-blue-600 mb-4">
-        WXT + Tailwind CSS v4
-      </h1>
-      <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-        動作確認
-      </button>
-    </div>
+    <Card className="w-full max-w-sm">
+      <CardHeader>
+        <CardTitle>PR explain</CardTitle>
+        <CardDescription>gitの差分情報を解析して説明する</CardDescription>
+      </CardHeader>
+      <CardFooter className="flex-col gap-2">
+        <Button type="submit" className="w-full">
+          start explain
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }
 
