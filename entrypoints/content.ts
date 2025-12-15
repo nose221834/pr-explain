@@ -1,15 +1,28 @@
 import { getGithubPrDiff } from "@/utils/githubPrDiff/githubPrDiff";
+import { getPrInfoFromUrl } from "@/utils/getPrInfoFromUrl/getPrInfoFromUrl";
+import type { Message } from "./background";
 
 export default defineContentScript({
   matches: ["https://github.com/*/*/pull/*/files*"],
-  main() {
+  async main() {
     const fileBlocks = document.querySelectorAll(
       '[data-details-container-group="file"]'
     );
 
+    const { owner, repo, prNumber } = getPrInfoFromUrl(location.pathname);
+
     const diffs = getGithubPrDiff(fileBlocks);
 
-    console.log("diffs:", diffs);
+    console.log("diffs", diffs);
+
+    const message: Message = {
+      owner,
+      repo,
+      prNumber,
+      diffs,
+    };
+
+    await browser.runtime.sendMessage(message);
   },
 });
 
@@ -29,20 +42,3 @@ export default defineContentScript({
 //   }
 // }
 //
-// もっと発展させて、hunksを持ってもいいね（連続した行の変更を一つのhunkとして扱う）
-// {
-//   "file.js": {
-//     "hunks": [
-//       {
-//         "oldStart": 12,
-//         "oldEnd": 14,
-//         "newStart": 12,
-//         "newEnd": 15,
-//         "lines": [
-//           { "type": "context", "oldLine": 12, "newLine": 12, "text": "..." },
-//           ...
-//         ]
-//       }
-//     ]
-//   }
-// }
