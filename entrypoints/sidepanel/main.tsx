@@ -5,6 +5,8 @@ import "@/assets/tailwind.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <div className="flex justify-center p-4">
+      <App />
+    </div>
   </React.StrictMode>
 );
