@@ -1,81 +1,68 @@
-import { DiffsSchema } from "@/utils/githubPrDiff/githubPrDiff.shema";
-import * as z from "zod";
 import { geminiApiCreateReport } from "@/utils/deepwikiMcp/geminiApiCreateReport";
-
-// Content script からのメッセージ（PR情報）
-export const MessageSchema = z.object({
-  owner: z.string(),
-  repo: z.string(),
-  prNumber: z.number(),
-  diffs: DiffsSchema,
-});
-
-export type Message = z.infer<typeof MessageSchema>;
-
-// UI からのメッセージ（開始指示）
-export const StartMessageSchema = z.object({
-  type: z.literal("START"),
-  tabId: z.number(),
-});
-
-export type StartMessage = z.infer<typeof StartMessageSchema>;
-
-// Background → Content へのメッセージ（テキスト要求）
-export const GetTextMessageSchema = z.object({
-  type: z.literal("GET_TEXT"),
-});
-
-export type GetTextMessage = z.infer<typeof GetTextMessageSchema>;
+import type {
+  SidepanelToBackgroundStartMessage,
+  BackgroundToContentGetTextMessage,
+  BackgroundToSidepanelTextMessage,
+} from "@/utils/entrypoints";
+import {
+  SidepanelToBackgroundStartMessageSchema,
+  ContentToBackgroundPrInfoMessageSchema,
+} from "@/utils/entrypoints";
 
 export default defineBackground(() => {
-  //UIからの起動依頼を受け入れるお試しコード
-  browser.runtime.onMessage.addListener((msg: StartMessage) => {
-    // 型チェック
-    const parseResult = StartMessageSchema.safeParse(msg);
-    if (!parseResult.success) return;
+  // sidepanelからのメッセージを受け取る
+  browser.runtime.onMessage.addListener(
+    (msg: SidepanelToBackgroundStartMessage) => {
+      // 型チェック
+      const parseResult =
+        SidepanelToBackgroundStartMessageSchema.safeParse(msg);
+      if (!parseResult.success) return;
 
-    const startMessage = parseResult.data;
+      const startMessage = parseResult.data;
 
-    (async () => {
-      const tabId = startMessage.tabId;
+      // contentとメッセージを送受信する
+      const contentHandler = async () => {
+        const tabId = startMessage.tabId;
 
-      // background -> content（文字列要求）
-      const getTextMessage: GetTextMessage = { type: "GET_TEXT" };
-      const res = await browser.tabs.sendMessage(tabId, getTextMessage);
+        // background -> content（文字列要求）
+        const getTextMessage: BackgroundToContentGetTextMessage = {
+          type: "GET_TEXT",
+        };
+        // contentにメッセージを送信
+        const res = await browser.tabs.sendMessage(tabId, getTextMessage);
+        // contentからのメッセージをparse
+        const parseResult =
+          ContentToBackgroundPrInfoMessageSchema.safeParse(res);
+        if (!parseResult.success) return;
 
-      console.log("res:", res);
+        // contextResultを取得
+        const contextResult = parseResult.data;
+        // TODO: geminiにcontextResultを渡してreportを生成
 
-      // content から返ってきた string を sidepanel にブロードキャスト
-      const text = typeof res === "string" ? res : String(res ?? "");
+        // geminiにreportを生成
+        const report = await geminiApiCreateReport(
+          contextResult.owner,
+          contextResult.repo,
+          contextResult.prNumber,
+          contextResult.diffs
+        );
 
-      console.log("text:", text);
-      await browser.runtime.sendMessage(text);
-    })();
+        const textMessage: BackgroundToSidepanelTextMessage = {
+          type: "TEXT_RESULT",
+          text: report,
+        };
+        await browser.runtime.sendMessage(textMessage);
+      };
+      contentHandler();
 
-    return false;
-  });
+      return false;
+    }
+  );
 
-  // geminiを叩くやつ
+  // テスト用のURLを開く
   if (import.meta.env.DEV) {
     browser.tabs.create({
       url: "https://github.com/refined-github/refined-github/pull/8825/files",
-    });
-
-    console.log("background started");
-
-    browser.runtime.onMessage.addListener(async (message: Message, sender) => {
-      console.log("message:", message);
-
-      // geminiのAPIが勿体無いので一旦テスト用に固定値を返す
-      // const report = await geminiApiCreateReport(
-      //   message.owner,
-      //   message.repo,
-      //   message.prNumber,
-      //   message.diffs
-      // );
-      const report = "test";
-
-      console.log("report:", report);
     });
   }
 });

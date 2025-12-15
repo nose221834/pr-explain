@@ -8,16 +8,21 @@ import {
   CardTitle,
   CardContent,
 } from "@/components/ui/card";
-import type { StartMessage } from "../background";
+import type { SidepanelToBackgroundStartMessage } from "@/utils/entrypoints";
+import { BackgroundToSidepanelTextMessageSchema } from "@/utils/entrypoints";
 
 export function App() {
   const [text, setText] = useState<string>("");
 
   useEffect(() => {
     const handler = (message: any) => {
-      if (typeof message === "string") {
-        setText(message);
-      }
+      // 型チェック
+      const parseResult =
+        BackgroundToSidepanelTextMessageSchema.safeParse(message);
+      if (!parseResult.success) return;
+
+      const textMessage = parseResult.data;
+      setText(textMessage.text);
     };
     browser.runtime.onMessage.addListener(handler);
     return () => {
@@ -33,7 +38,10 @@ export function App() {
     if (!tab?.id) return;
 
     // sidepanel -> background（起動依頼）
-    const startMessage: StartMessage = { type: "START", tabId: tab.id };
+    const startMessage: SidepanelToBackgroundStartMessage = {
+      type: "START",
+      tabId: tab.id,
+    };
     await browser.runtime.sendMessage(startMessage);
   };
 
