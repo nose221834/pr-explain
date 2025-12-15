@@ -1,5 +1,5 @@
 import { DiffsSchema } from "@/utils/githubPrDiff/githubPrDiff.shema";
-import { z } from "zod";
+import * as z from "zod";
 import { geminiApiCreateReport } from "@/utils/deepwikiMcp/geminiApiCreateReport";
 
 export const MessageSchema = z.object({
