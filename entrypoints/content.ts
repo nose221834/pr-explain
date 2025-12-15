@@ -5,6 +5,13 @@ import type { Message } from "./background";
 export default defineContentScript({
   matches: ["https://github.com/*/*/pull/*/files*"],
   async main() {
+    browser.runtime.onMessage.addListener((message) => {
+      if (message?.type === "START_EXPLAIN") {
+        console.log("start explain clicked from UI");
+        // ここで diff 収集や sendMessage(background) を開始
+      }
+    });
+
     const fileBlocks = document.querySelectorAll(
       '[data-details-container-group="file"]'
     );
