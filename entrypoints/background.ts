@@ -1,11 +1,15 @@
-import type { Diffs } from "@/utils/githubPrDiff/githubPrDiff.shema";
+import { DiffsSchema } from "@/utils/githubPrDiff/githubPrDiff.shema";
+import { z } from "zod";
+import { geminiApiCreateReport } from "@/utils/deepwikiMcp/geminiApiCreateReport";
 
-export type Message = {
-  owner: string;
-  repo: string;
-  prNumber: number;
-  diffs: Diffs;
-};
+export const MessageSchema = z.object({
+  owner: z.string(),
+  repo: z.string(),
+  prNumber: z.number(),
+  diffs: DiffsSchema,
+});
+
+export type Message = z.infer<typeof MessageSchema>;
 
 export default defineBackground(() => {
   if (import.meta.env.DEV) {
@@ -17,6 +21,15 @@ export default defineBackground(() => {
 
     browser.runtime.onMessage.addListener(async (message: Message, sender) => {
       console.log("message:", message);
+
+      const report = await geminiApiCreateReport(
+        message.owner,
+        message.repo,
+        message.prNumber,
+        message.diffs
+      );
+
+      console.log("report:", report);
     });
   }
 });
