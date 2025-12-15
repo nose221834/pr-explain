@@ -1,9 +1,10 @@
 import { getGithubPrDiff } from "@/utils/githubPrDiff/githubPrDiff";
 import { getPrInfoFromUrl } from "@/utils/getPrInfoFromUrl/getPrInfoFromUrl";
+import type { Message } from "./background";
 
 export default defineContentScript({
   matches: ["https://github.com/*/*/pull/*/files*"],
-  main() {
+  async main() {
     const fileBlocks = document.querySelectorAll(
       '[data-details-container-group="file"]'
     );
@@ -12,24 +13,16 @@ export default defineContentScript({
 
     const diffs = getGithubPrDiff(fileBlocks);
 
-    console.log("diffs:", diffs);
+    console.log("diffs", diffs);
 
-    // backgtoundにメッセージを送信
-    browser.runtime.sendMessage(
-      {
-        type: "FETCH_DEEPWIKI",
-        payload: { owner, repo },
-      },
-      (response) => {
-        if (response && response.success) {
-          console.log("DeepWiki data:", response.wikiData);
-        } else if (response && !response.success) {
-          console.error("Error fetching DeepWiki data:", response.error);
-        } else {
-          console.error("No response received from background script");
-        }
-      }
-    );
+    const message: Message = {
+      owner,
+      repo,
+      prNumber,
+      diffs,
+    };
+
+    await browser.runtime.sendMessage(message);
   },
 });
 
@@ -49,20 +42,3 @@ export default defineContentScript({
 //   }
 // }
 //
-// もっと発展させて、hunksを持ってもいいね（連続した行の変更を一つのhunkとして扱う）
-// {
-//   "file.js": {
-//     "hunks": [
-//       {
-//         "oldStart": 12,
-//         "oldEnd": 14,
-//         "newStart": 12,
-//         "newEnd": 15,
-//         "lines": [
-//           { "type": "context", "oldLine": 12, "newLine": 12, "text": "..." },
-//           ...
-//         ]
-//       }
-//     ]
-//   }
-// }
