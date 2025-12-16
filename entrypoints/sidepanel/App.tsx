@@ -13,6 +13,7 @@ import { BackgroundToSidepanelTextMessageSchema } from "@/utils/entrypoints";
 
 export function App() {
   const [text, setText] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const handler = (message: any) => {
@@ -23,6 +24,7 @@ export function App() {
 
       const textMessage = parseResult.data;
       setText(textMessage.text);
+      setIsLoading(false); // 結果を受信したらローディング終了
     };
     browser.runtime.onMessage.addListener(handler);
     return () => {
@@ -31,11 +33,19 @@ export function App() {
   }, []);
 
   const handleClick = async () => {
+    if (isLoading) return; // 既に処理中の場合は何もしない
+
+    setIsLoading(true); // ローディング開始
+    setText(""); // 前回の結果をクリア
+
     const [tab] = await browser.tabs.query({
       active: true,
       currentWindow: true,
     });
-    if (!tab?.id) return;
+    if (!tab?.id) {
+      setIsLoading(false); // エラー時はローディング終了
+      return;
+    }
 
     // sidepanel -> background（起動依頼）
     const startMessage: SidepanelToBackgroundStartMessage = {
@@ -56,9 +66,9 @@ export function App() {
           type="submit"
           className="w-full"
           onClick={handleClick}
-          disabled={text !== ""}
+          disabled={isLoading}
         >
-          start explain
+          {isLoading ? "Processing..." : "start explain"}
         </Button>
       </CardFooter>
       <CardContent>
